@@ -87,10 +87,41 @@ func PackageTime(){
 	fmt.Println("\n 6.5.2 time zone")
 	l1, err := time.LoadLocation("Asia/Taipei") // Loads the time zone for Asia/Taipei
 	if err != nil {
-		panic(err) // If there is an error during loading the time zone, it will panic
+		panic(err) 
 	}
 	fmt.Println(l1.String()) // Prints the string representation of the loaded time zone
 
 	fmt.Println("\n 6.5.5 time")
 	fmt.Println(time.Now().Format("2006年1月2日, 15點04分")) // time.Format 的格式字串必須用「2006-01-02 15:04:05」這組數字（Go 的基準時間）來代表各個欄位。但 Go 只認得 15 代表小時、04 代表分鐘。
+	t2, err := time.ParseInLocation("2006年1月2日, 15點04分", "2100年12月31日, 17點14分", l1) // Parses the date string in the specified format and time zone
+	if err != nil {
+		panic(err) 
+	}
+	fmt.Println(t2)
+	fmt.Println(t2.Location()) // Prints the location of the parsed time
+
+	fmt.Println("\n 6.5.6 ticker")
+	intChan := make(chan int, 1) // Creates a buffered channel to receive integers
+	go func() {
+		time.Sleep(time.Second)
+		intChan<-1 // Sends a value to the intChan channel after 1 second
+	}()
+	TickerFor:
+	for {
+		select {
+			case <-intChan:
+				fmt.Println()
+				break TickerFor // Breaks the loop if a value is received from the intChan channel
+			case <-time.NewTicker(100 * time.Millisecond).C: // Creates a ticker that ticks every 100 milliseconds
+				fmt.Print(".") // 每次 select 進入時都會重新創建一個新的 Ticker，但你沒有 Stop() 它-> 每 100 毫秒建立一個新的 goroutine(時間越短會印越多...)，每個 goroutine 都在 tick，結果：你印出 . 的速度越來越快 → 變成一堆點點...
+		}
+	}
+	
+	fmt.Println("\n 6.5.7 timer")
+	select {
+	case <-intChan:	// 這邊的intChan沒有接收任何資料，所以會block在這裡，導致只會執行下面那個case的情況
+		fmt.Println("收到使用者發送的驗證碼")
+	case <-time.NewTimer(time.Second).C:
+		fmt.Println("驗證碼已過期")
+	}
 }
