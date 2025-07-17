@@ -2,7 +2,9 @@ package note
 
 import (
 	"fmt"
+	// "goprac/util"
 	"math/rand" // generated random numbers are predictable easily, if want more secure random numbers, use "crypto/rand" package or reference about "GO cryptography"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -123,5 +125,37 @@ func PackageTime(){
 		fmt.Println("收到使用者發送的驗證碼")
 	case <-time.NewTimer(time.Second).C:
 		fmt.Println("驗證碼已過期")
+	}
+}
+
+// Common file operations
+func FileOperation() {
+	// util.MKdirWithFilePath("d1/d2/fil2")
+	fmt.Println("\n 6.6.5 Folder Operation")
+	dirEntrys, err := os.ReadDir("C:/GoPrac/util") // dirEntrys is a slice of os.DirEntry, which represents the entries in the specified directory
+	if err != nil {
+		panic(err)
+	}
+	for _, v := range dirEntrys {
+		fmt.Println(v.Name())
+	}
+	 
+
+	fmt.Println("\n 6.6.6 File Operation")
+	file, err := os.OpenFile("f1", os.O_RDWR|os.O_CREATE, 0665)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	fmt.Println("\n 6.6.7 Unbuffered reading and writing (suitable for small files)")
+	data, err := os.ReadFile("f1") // Reads the entire content of the file "f1" into memory
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("f1中的資料為", string(data)) // Converts the byte slice to a string and prints it
+	err = os.WriteFile("f2", data, 0775)
+	if err != nil {
+		panic(err)
 	}
 }
