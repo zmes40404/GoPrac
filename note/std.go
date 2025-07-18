@@ -1,6 +1,7 @@
 package note
 
 import (
+	"bufio"
 	"fmt"
 	// "goprac/util"
 	"math/rand" // generated random numbers are predictable easily, if want more secure random numbers, use "crypto/rand" package or reference about "GO cryptography"
@@ -159,3 +160,24 @@ func FileOperation() {
 		panic(err)
 	}
 }
+
+// 6.7 Files Reading and Writing
+func FileReadAndWrite() {
+	f5, err := os.OpenFile("f5", os.O_WRONLY|os.O_CREATE, 0666) // Opens the file "f5" for writing, creating it if it doesn't exist
+	if err != nil {
+		panic(err)
+	}
+	defer f5.Close() // Ensures the file is closed when the function exits
+	writer := bufio.NewWriter(f5) // Creates a buffered writer for the file
+	fmt.Println("buffer size: ", writer.Size()) 
+	for i := range 5 {	// 假如有f1~f4四個文件，這裡會讀取f1~f4的內容並寫入到f5中
+		fileName := fmt.Sprintf("f%v", i)
+		data, err := os.ReadFile(fileName) // Reads the content of the file "f%v" into memory
+		if err != nil {
+		panic(err)
+		}
+		data=append(data, '\n') // Appends a newline character to the data
+		writer.Write(data) // 寫入記憶體RAM
+	}
+	writer.Flush() // 確保所有記憶體的資料都被寫入到硬碟(f5這個文件)中
+} 
