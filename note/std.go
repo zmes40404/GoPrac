@@ -2,7 +2,9 @@ package note
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
+
 	// "goprac/util"
 	"math/rand" // generated random numbers are predictable easily, if want more secure random numbers, use "crypto/rand" package or reference about "GO cryptography"
 	"os"
@@ -181,3 +183,16 @@ func FileReadAndWrite() {
 	}
 	writer.Flush() // 確保所有記憶體的資料都被寫入到硬碟(f5這個文件)中
 } 
+
+// 6.8 Error
+func Errors(){
+	defer func() {
+		err := recover() // recover() 用來捕捉 panic 的錯誤
+		fmt.Println("捕捉到了錯誤:", err) 
+	}()
+	err1 := errors.New("可愛的錯誤") // Creates a new error with the message "可愛的錯誤"
+	fmt.Println("err1=", err1)
+	err2 := fmt.Errorf("%s的錯誤", "溫柔")
+	fmt.Println("err2=", err2) // Creates a formatted error with the message "溫柔的錯誤"
+	panic(err1) // Panics with the error message, which will stop the program execution
+}
