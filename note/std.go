@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"goprac/util"
 
 	// "goprac/util"
 	"math/rand" // generated random numbers are predictable easily, if want more secure random numbers, use "crypto/rand" package or reference about "GO cryptography"
@@ -195,4 +196,22 @@ func Errors(){
 	err2 := fmt.Errorf("%s的錯誤", "溫柔")
 	fmt.Println("err2=", err2) // Creates a formatted error with the message "溫柔的錯誤"
 	panic(err1) // Panics with the error message, which will stop the program execution
+}
+
+// 6.9 Logging
+func Log() {
+	defer func() {
+		err := recover() // recover() 用來捕捉 panic 的錯誤
+		fmt.Println("捕捉到了錯誤:", err)
+	}()
+	err := errors.New("這是一個錯誤")
+	util.INFO.Println(err)
+	util.DEBUG.Println(err)
+	// util.WARN.Panicln(err)
+	// util.ERROR.Fatalln(err) // This will log the error and then call os.Exit(1), terminating the program, 0代表正常退出，1代表異常退出。Fatal只能退出，連defer recover都不會執行。
+}
+
+// 6.10 Unit Test
+func IsNotNegative(n int) bool {
+	return n > -1
 }

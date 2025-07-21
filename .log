@@ -1,0 +1,7 @@
+INFO: 2025/07/21 09:49:21 c:/GoPrac/note/std.go:208: 這是一個錯誤
+INFO: 2025/07/21 09:49:43 c:/GoPrac/note/std.go:208: 這是一個錯誤
+WARN: 2025/07/21 09:49:43 c:/GoPrac/note/std.go:209: 這是一個錯誤
+INFO: 2025/07/21 09:50:42 c:/GoPrac/note/std.go:208: 這是一個錯誤
+ERROR: 2025/07/21 09:50:42 c:/GoPrac/note/std.go:210: 這是一個錯誤
+INFO: 2025/07/21 09:51:51 c:/GoPrac/note/std.go:208: 這是一個錯誤
+DEBUG: 2025/07/21 09:51:51 c:/GoPrac/note/std.go:209: 這是一個錯誤
