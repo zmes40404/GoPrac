@@ -258,4 +258,14 @@ func CmdArgs() {
 		第1個無flag參數是s
 		第2個無flag參數是sfsdf
 	*/
+
+}
+
+// 6.12 "builtin" package
+func PackageBuiltin() {
+	c1 := complex(12.34, 45.67) // Creates a complex number with real part 12.34 and imaginary part 45.67
+	fmt.Println("c1=", c1)
+	r1 := real(c1) // Gets the real part of the complex number
+	i1 := imag(c1) // Gets the imaginary part of the complex number
+	fmt.Println("r1=", r1, "i1=", i1) // Prints the real and imaginary parts of the complex number
 }
