@@ -3,6 +3,7 @@ package note
 import (
 	"bufio"
 	"errors"
+	"flag"
 	"fmt"
 	"goprac/util"
 
@@ -214,4 +215,47 @@ func Log() {
 // 6.10 Unit Test
 func IsNotNegative(n int) bool {
 	return n > -1
+}
+
+// 6.11 Command Prompt Arguments
+func CmdArgs() {
+	fmt.Printf("接受到了%v個參數\n", len(os.Args))
+	for i, v := range os.Args {
+		fmt.Printf("第%v個參數是%v\n", i, v)
+	}
+	fmt.Println()
+
+	/*
+	Input: {go run . fsed -fdv sdc -sdf=sv "csf dss "}
+	Output: 第0個參數是C:\Users\Maton_Wang\AppData\Local\go-build\02\02b1f4d14ad032f98f0cf97257051459bbe434718b07811823a026922748fbf4-d\goprac.exe -> 當前可執行文件的位置(緩存位置)
+			第1個參數是fsed
+			第2個參數是-fdv
+			第3個參數是sdc
+			第4個參數是-sdf=sv
+			第5個參數是csf dss
+	*/
+
+	vPtr := flag.Bool("v", false, "Go版本號") // flag.Bool(...) 的回傳值是*bool，這是一個指向 bool 的指標，指向的值會被 flag 包裝起來。代表要存取真正的布林值，要透過解引用(dereferencing): *vPtr，才能拿到布林值的實際內容(true or false) 
+	var userName string
+	flag.StringVar(&userName, "u", "", "用戶名")
+	flag.Func("f", "", func(s string) error {
+		fmt.Println("s=", s) // Output: s= 444
+		return nil // Returns nil to indicate no error occurred
+	}) // flag.Func(...) allows you to define a custom function to handle the flag, here it just prints the value of the flag	
+	flag.Parse() // Parses the command-line flags and arguments
+	if *vPtr { // If the -v flag is set, it will print the Go version	
+		fmt.Println("Go版本是 V0.0.0")
+	}
+	fmt.Println("當前用戶為:", userName)
+	for i, v := range flag.Args() { // flag.Args() returns the non-flag command-line arguments
+		fmt.Printf("第%v個無flag參數是%v\n", i, v)
+	}
+
+	/*
+	Input: go run . -u fang -v f s sfsdf
+	Output: 
+		第0個無flag參數是f
+		第1個無flag參數是s
+		第2個無flag參數是sfsdf
+	*/
 }
