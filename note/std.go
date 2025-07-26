@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"goprac/util"
 	"runtime"
+	"sync"
 
 	// "goprac/util"
 	"math/rand" // generated random numbers are predictable easily, if want more secure random numbers, use "crypto/rand" package or reference about "GO cryptography"
@@ -280,4 +281,81 @@ func PackageRuntime() {
 		fmt.Println("原本的最大 CPU 數量是", oriNum)
 	}
 	// runtime.Goexit() // 這一定會報錯，這行code導致沒有一個線程能繼續執行，因為它會終止當前的 goroutine。這個函式通常用於在 goroutine 中提前退出，而不會影響其他 goroutine 的執行。
+}
+
+// 6.14 sync package
+func PackageSync() {
+	// 計算從 2 到 100000 之間有多少個質數（prime number），並使用 Goroutine 並行處理提升效能。
+	// 但因為多個 Goroutine 都會對共享變數 c 做加一的動作（c++），所以 必須使用 mutex 保護臨界區（critical section），以避免數據競爭（race condition）。
+	fmt.Println("\n 6.14.1 Mutex互斥鎖 / 6.14.2 WaitGroup") // "WaitGroup": 通過計數器來獲得阻塞能力
+	var c int
+	var mutex sync.Mutex // Mutex（互斥鎖）保護 c++ 的區塊，保證同一時間只有一個 Goroutine 在修改 c。
+	var wg sync.WaitGroup // 在 Go 中，一旦 main() 執行完畢，整個程式就會結束，不管還有多少 Goroutine 沒執行完。
+
+	primeNum:=func (n int) {
+		defer wg.Done()	// Goroutine 執行完會通知「我結束了」
+		for i:=2; i<n; i++ {
+			if n%i==0 {
+				return 
+			}
+		}
+		// 如果是質數，執行 mutex.Lock() → c++ → mutex.Unlock()。
+		mutex.Lock()
+		c++
+		mutex.Unlock()
+	}
+	
+	for i:= 2; i<100001; i++ {	// 共產生 99999 個 Goroutine 同時判斷質數。 並行處理，大幅提升效能。
+		wg.Add(1)	// 告訴主程式「我有一個 Goroutine 開始了」
+		go primeNum(i)
+	}
+	// 沒有 WaitGroup 的話會怎樣？-> 程式可能在還沒算完質數時就印出 0 或提早結束，因為主線程直接跑到 fmt.Println(...)。
+	wg.Wait()	// 主程式等到所有 Goroutine 都 Done() 後才會繼續執行
+	fmt.Printf("\n總共找到%v的質數\n", c)
+
+	fmt.Println("\n 6.14.3 Cond")	// Cond提供了同時控制多個thread阻塞的能力
+	cond := sync.NewCond(&mutex)
+	for i:=0; i<10; i++ {
+		go func (n int)  {
+			cond.L.Lock()	// 保護與「條件」相關的 共享狀態（像 ready、任務佇列、緩衝區資料 等等）。
+			cond.Wait()	// 阻塞，等待條件被喚醒（釋放鎖，之後再重新取得）
+			fmt.Printf("協程%v被喚醒了\n", n)
+			cond.L.Unlock()
+		}(i)
+	}
+	for i:=0; i < 15; i++ {
+		time.Sleep(100 * time.Millisecond)
+		fmt.Print(".")
+		if i==4 {
+			fmt.Println()
+			cond.Signal()	// 喚醒其中一個在 Wait() 的 Goroutine
+		}
+		if i==9 {
+			fmt.Println()
+			cond.Broadcast()	// 喚醒所有等待中的 Goroutine
+		}
+	}
+
+	fmt.Println("\n 6.14.4 Once") // "Once"確保一個函數只能被執行一次
+	var once sync.Once
+	for range 10 {
+		wg.Add(1)
+		go func(){
+			once.Do(func(){
+				fmt.Println("只有一次機會")
+			})
+			wg.Done()
+		}()
+	}
+	wg.Wait()
+
+	fmt.Println("\n 6.14.5 Map") // "Map": 併發安全的鍵值對
+	var m sync.Map
+	m.Store(1, 100)
+	m.Store(2, 200)
+	m.Store(3, 300)
+	m.Range(func(key, value interface{}) bool {
+		fmt.Printf("m[%v]=%v\n", key, value.(int))
+		return true
+	})
 }
