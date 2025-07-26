@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"goprac/util"
+	"runtime"
 
 	// "goprac/util"
 	"math/rand" // generated random numbers are predictable easily, if want more secure random numbers, use "crypto/rand" package or reference about "GO cryptography"
@@ -268,4 +269,15 @@ func PackageBuiltin() {
 	r1 := real(c1) // Gets the real part of the complex number
 	i1 := imag(c1) // Gets the imaginary part of the complex number
 	fmt.Println("r1=", r1, "i1=", i1) // Prints the real and imaginary parts of the complex number
+}
+
+// 6.13 runtime package
+func PackageRuntime() {
+	cpuNum := runtime.NumCPU() // Gets the number of logical CPUs usable by the current process
+	fmt.Println("當前系統有", cpuNum, "個 CPU")
+	if runtime.NumCPU() > 7 {
+		oriNum := runtime.GOMAXPROCS(runtime.NumCPU() - 1)	 // Sets the maximum number of CPUs that can be executing simultaneously to one less than the number of available CPUs
+		fmt.Println("原本的最大 CPU 數量是", oriNum)
+	}
+	// runtime.Goexit() // 這一定會報錯，這行code導致沒有一個線程能繼續執行，因為它會終止當前的 goroutine。這個函式通常用於在 goroutine 中提前退出，而不會影響其他 goroutine 的執行。
 }
