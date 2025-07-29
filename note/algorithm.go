@@ -1,6 +1,10 @@
 package note
 
-import "fmt"
+import (
+	"fmt"
+	"math/rand"
+	"time"
+)
 
 // 7.1 Recursion
 var fibonacciRes []int // 用一個slice來紀錄已經計算過的結果。用Space Complexity換取Time Complexity。
@@ -39,10 +43,55 @@ func closureFunc() func(int) int {	// 這個 closureFunc 的行為是： 定義�
 	}
 
 }
+
 func Closure() {	
 	f := closureFunc()	// 每次呼叫 closureFunc()，會重新建立一個 i := 0 的環境，並把這個環境「包住」傳回去。
 	f(2)
 	f(4)
 	f = closureFunc()
 	f(6)
+}
+
+// 7.3 Sort
+// 7.3.1 Bubble Sort
+func bubbleSort(s []int) { // 這是引用類型直接就地修改，不需要返回
+	lastIndex := len(s)-1
+	for i:=0; i<lastIndex; i++ { // 外層i: 控制輪數(總共要比幾輪) -> 一個長度為 n 的陣列，最多只要比 n-1 輪，每一輪會「把一個最大的值移到對的位置」，所以第 i 輪後，右邊的 i 個數已經是正確位置，不用再比較。
+		for j:=0; j<lastIndex-i; j++ {	// 內層j: 控制當前輪要比哪些 index -> 你要從 j = 0 開始往右，讓最大值一路浮上去，但尾端的 i 個數已經排好了，所以不用再比，所以比較範圍只到：j < n - 1 - i，也就是 j < lastIndex - i
+			// "j<lastIndex-i"超直觀記憶法: 「每輪比完，最右邊有 i 個不用再比！」
+			fmt.Printf("第%d輪 比較 s[%d]=%d 和 s[%d]=%d\n", i, j, s[j], j+1, s[j+1])
+			if s[j] > s[j+1] {	// 如果">"改成"<"就被成降序數列
+				tmp := s[j+1]
+				s[j+1] = s[j]
+				s[j] = tmp
+			}
+		}
+	}
+}
+
+func reverseBubbleSort(s []int) {
+	lastIndex := len(s) - 1
+	for i := 0; i < lastIndex; i++ {
+		for j := lastIndex; j > i; j-- {
+			fmt.Printf("第%d輪 比較 s[%d]=%d 和 s[%d]=%d\n", i, j, s[j], j-1, s[j-1])
+			if s[j] < s[j-1] {
+				s[j], s[j-1] = s[j-1], s[j] // 小的往左交換
+			}
+		}
+	}
+}
+
+func Sort() {
+	n := 10
+	s := make([]int, n)
+	seedNum := time.Now().UnixNano()
+	for i:=0; i<n; i++ {
+		//rand.Seed(seedNum)
+		s[i] = rand.Intn(10001)
+		seedNum++
+	}
+	fmt.Println("排序前:", s)
+	bubbleSort(s)
+	reverseBubbleSort(s)
+	fmt.Println("排序後:", s)
 }
