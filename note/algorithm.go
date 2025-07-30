@@ -111,6 +111,21 @@ func SelectionSort(s []int) { // 這是引用類型直接就地修改，不需�
 	}
 }
 
+// 7.3.3 Insertion Sort -> 將資料列假設分成已排序和未排序的兩部分，每次從未排序的資料中，挑選出一個元素，插入到已排序的資料中，直到所有的資料都已排序完成。
+func InsertionSort(s []int) {
+	for i:=1; i<len(s); i++ {
+		tmp := s[i] 	// tmp就是當下要比較處理的element，也就是尚未排序數列中的第一個element
+		j := i-1	// j就是已經排序數列中的最後一個
+		for ; j>=0 && s[j] > tmp; j-- {	// 已排序的數列開始找出大小剛好要放tmp值的位置
+			s[j+1] = s[j]	// 大的數字往右複製，用複製(記憶體寫入1次)的效能比用swap的好，因為swap的底層是用變數tmp來裝其中一個要交換的值，所以底層其實是記憶體寫入3次
+		}
+		if j != i-1 {	// 這個判斷用來避免剛好順序都排序好的片段進行額外的記憶體資料寫入
+			s[j+1] = tmp	//「插入點」 = 比它小的那個右邊，如果剛好在s[0]的話，j就會是-1，-1的右邊就是0
+			fmt.Println("s=", s)
+		}
+	}
+}
+
 func Sort() {
 	n := 10
 	s := make([]int, n)
@@ -123,6 +138,7 @@ func Sort() {
 	fmt.Println("排序前:", s)
 	// bubbleSort(s)
 	// reverseBubbleSort(s)
-	SelectionSort(s)
+	// SelectionSort(s)
+	InsertionSort(s)
 	fmt.Println("排序後:", s)
 }
