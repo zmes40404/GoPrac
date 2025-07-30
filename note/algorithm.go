@@ -81,17 +81,48 @@ func reverseBubbleSort(s []int) {
 	}
 }
 
+// 7.3.2 Selection Sort -> 不用每個element去進行大小交換，而是用一個max index 或 min index來記錄最大或最小的element，大小比較完之後確定max或min index的值，單圈只要交換一次即可
+func SelectionSort(s []int) { // 這是引用類型直接就地修改，不需要返回
+	lastIndex := len(s)-1
+	for i:=0; i < lastIndex; i++ { // 外層i: 控制輪數(總共要比幾輪) -> 一個長度為 n 的陣列，最多只要比 n-1 輪，每一輪會「把一個最大的值移到對的位置」，所以第 i 輪後，右邊的 i 個數已經是正確位置，不用再比較。
+		
+		// 假設array最右邊都是設定最大的element
+		maxIndex := lastIndex-i		// 把max index給記錄下來
+		for j:=0; j<lastIndex-i; j++ {	// 
+			if s[j] > s[maxIndex] {
+				maxIndex = j		// 透過大小去比，如果大小有變化，就直接去更動max index，這樣跟bubble sort比起來可以減少每一個element都要去交換的過程(減少資料的寫入次數)
+			}
+		}
+		if maxIndex != lastIndex-i {
+			s[maxIndex], s[lastIndex-i] = s[lastIndex-i], s[maxIndex]	// Golang是可以直接這樣寫互換的方式
+		}
+
+		// 假設array最左邊都是設定最小的element
+		// minIndex := i
+		// for j:=i+1; j<=lastIndex; j++ {
+		// 	if s[j] < s[minIndex] {
+		// 		minIndex = j
+		// 	}
+		// }
+
+		// if minIndex != i {
+		// 	s[i], s[minIndex] = s[minIndex], s[i]
+		// }
+	}
+}
+
 func Sort() {
 	n := 10
 	s := make([]int, n)
 	seedNum := time.Now().UnixNano()
 	for i:=0; i<n; i++ {
 		//rand.Seed(seedNum)
-		s[i] = rand.Intn(10001)
+		s[i] = rand.Intn(101)
 		seedNum++
 	}
 	fmt.Println("排序前:", s)
-	bubbleSort(s)
-	reverseBubbleSort(s)
+	// bubbleSort(s)
+	// reverseBubbleSort(s)
+	SelectionSort(s)
 	fmt.Println("排序後:", s)
 }
