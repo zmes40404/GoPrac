@@ -126,6 +126,59 @@ func InsertionSort(s []int) {
 	}
 }
 
+// 7.3.4 Quick Sort
+func QuickSort(s []int, leftIndex, rightIndex int) {
+	if leftIndex >= rightIndex { // base case: 不需排序。如果你要排序的「區間」已經沒有元素（或只剩一個元素），就不需要再排序了，直接 return。
+		return
+	}
+	
+	if leftIndex < rightIndex {
+		middle := s[rightIndex]		// 一開始假設最右邊的數是中位數
+		var rightslice []int	// 額外的記憶體來儲存element大於pivot的數列
+		l := leftIndex
+		for i:=leftIndex; i<rightIndex; i++ {
+			if s[i] > middle {	// 如果該element大於pivot
+				rightslice = append(rightslice, s[i])	// 把該element丟到新create的slice中
+			} else {
+				s[l]=s[i]	// 分割邏輯中「寫入左邊區塊」的重要步驟: 小於等於 pivot 的往左擠過去
+				l++
+			}
+		}
+		s[l] = middle	// 把原本最後一個當成中位數的值給插回s中間的位置
+		copy(s[l+1:], rightslice)	// 這個QuickSort是比較像merge sort要拼回去的，傳統的QuickSort都是在每個recurive裡面直接做swap
+		if leftIndex < l-1 {
+			QuickSort(s, leftIndex, l-1)
+		}
+		if l+1 < rightIndex {
+			QuickSort(s, l+1, rightIndex)
+		}
+	}
+}
+
+// 經典版：Lomuto 分割法寫法（更常見）
+func QuickSortLomuto(s []int, low, high int) {
+	if low >= high {	// 如果你要排序的「區間」已經沒有元素（或只剩一個元素），就不需要再排序了，直接 return。
+		return
+	}
+	pivotIndex := partition(s, low, high)
+	QuickSortLomuto(s, low, pivotIndex-1)
+	QuickSortLomuto(s, pivotIndex+1, high)
+}
+
+func partition(s []int, low, high int) int {
+	pivot := s[high] // 選擇最右邊為 pivot
+	i := low
+
+	for j := low; j < high; j++ {
+		if s[j] < pivot {
+			s[i], s[j] = s[j], s[i]		// 直接用交換的
+			i++
+		}
+	}
+	s[i], s[high] = s[high], s[i] // 將原本選定最後一個的中位數給換回中間正確的位置
+	return i // 返回 pivot 最終位置
+}
+
 func Sort() {
 	n := 10
 	s := make([]int, n)
@@ -139,6 +192,8 @@ func Sort() {
 	// bubbleSort(s)
 	// reverseBubbleSort(s)
 	// SelectionSort(s)
-	InsertionSort(s)
+	// InsertionSort(s)
+	QuickSort(s, 0, len(s)-1)
+	// QuickSortLomuto(s, 0, len(s)-1)
 	fmt.Println("排序後:", s)
 }
