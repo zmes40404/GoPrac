@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"goprac/util"
 	"runtime"
+	"sort"
 	"sync"
 
 	// "goprac/util"
@@ -358,4 +359,50 @@ func PackageSync() {
 		fmt.Printf("m[%v]=%v\n", key, value.(int))
 		return true
 	})
+}
+
+// 7.4 Sort Package
+type Person struct {
+	Name string
+	Age int
+}
+
+// 實現出3種sort interface: Len() int, Less(i, j int)bool, Swap(i, j int)
+type PersonSlice []Person
+func (ps PersonSlice) Len() int {
+	return len(ps)
+}
+func (ps PersonSlice) Less(i, j int) bool {
+	return ps[i].Age > ps[j].Age // 降序排序條件
+}
+func (ps PersonSlice) Swap(i ,j int) {
+	ps[i], ps[j] = ps[j], ps[i]
+}
+
+func PackageSort() {
+	fmt.Println("\n 7.4.1 Sorting common types")
+	intSlice:=[]int{2, 4, 8, 10}
+	v:=6
+	i:=sort.SearchInts(intSlice, v)
+	fmt.Printf("%v適合插入在%v的%v\n", v, intSlice, i)
+
+	fmt.Println("\n 7.4.2 自訂義排序")
+	p:=[]Person{{"小小", 18}, {"小方", 5}, {"小米", 50}}
+	
+	// func Slice(slice any, less func(i, j int) bool): 它使用你提供的 less 函數（兩個 index 比大小），在內部做 quicksort
+	sort.Slice(p, func(i, j int) bool {	//  i 和 j 是 slice 中的索引值
+		return p[i].Age < p[j].Age	// 該函數必須回傳一個 bool: 若回傳 true，代表 p[i] 要排在 p[j] 前面。若回傳 false，代表 p[i] 要排在 p[j] 後面。排序過程呼叫: p[0].Age < p[1].Age → 18 < 5 → false, p[1].Age < p[2].Age → 5 < 50 → true
+	})
+	fmt.Println("p=", p)
+
+	fmt.Println("\n 7.4.3 自訂義查找")
+	i = sort.Search(len(intSlice), func(i int) bool {
+		return intSlice[i] >= v
+	})
+	fmt.Printf("%v中第一次出現不小於%v的位置是%v\n", intSlice, v, i)
+
+	fmt.Println("\n 7.4.4 sort.interface")
+	// sort.Sort(PersonSlice(p)) // 就邊Sort()出來的結果會使用前面定義的Less() interface，從大到小排列
+	sort.Sort(sort.Reverse(PersonSlice(p)))
+	fmt.Println("p=", p)
 }

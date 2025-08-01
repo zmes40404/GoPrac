@@ -6,7 +6,7 @@ import (
 
 
 func main() {
-	note.Sort()
+	note.PackageSort()
 	// note.MainHeartbeatMoniter() // function to demonstrate heartbeat monitoring using ticker in "TimerTickerExtension.go"
 	// note.TimerTimeoutControl() // function to demonstrate timer timeout control in "TimerTickerExtension.go"
 }
