@@ -2,7 +2,9 @@ package note
 
 import (
 	"fmt"
+	"goprac/util"
 	"math/rand"
+	"sort"
 	"time"
 )
 
@@ -196,4 +198,37 @@ func Sort() {
 	QuickSort(s, 0, len(s)-1)
 	// QuickSortLomuto(s, 0, len(s)-1)
 	fmt.Println("排序後:", s)
+}
+
+// 7.5.2 Binary Search
+func BinarySearch(s []int, key int) int {
+	startIdx := 0
+	endIdx := len(s)-1
+	midIdx := 0
+	for startIdx <= endIdx {
+		midIdx = startIdx + (endIdx-startIdx)/2	// 這種取midIdx相較於值觀的"(endIdx-startIdx)/2"，可以避免可能endIdx-startIdx的值太大超出int64導致overflow。
+		if s[midIdx] < key {
+			startIdx = midIdx+1
+		}else if s[midIdx] > key {
+			endIdx = midIdx-1
+		} else {
+			return  midIdx
+		}				
+	}
+	return -1
+}
+
+func BinarySearchTest() {
+	// make([]int, N)	預分配記憶體，效能較好	已知大小，會填滿資料。避免了多次擴容與內存拷貝
+	s := make([] int, util.RandInt(1000)+1)	// 為什麼要+1 -> 假設 util.RandInt(1000) 回傳 0，那 0+1 = 1，這樣可以保證 slice 至少有長度 1，不會是空的
+	for i:=0; i< len(s); i++ {
+		s[i] = util.RandInt(1000)	// 將第 i 個元素填入隨機數值（範圍 0 到 999）
+	}
+	sort.Ints(s)
+	i:=BinarySearch(s, 555)
+	if i == -1 {
+		fmt.Println("沒有找到555")
+	}else {
+		fmt.Printf("555的下標為%v", i)
+	}
 }
