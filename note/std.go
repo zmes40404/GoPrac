@@ -2,6 +2,8 @@ package note
 
 import (
 	"bufio"
+	"bytes"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -405,4 +407,44 @@ func PackageSort() {
 	// sort.Sort(PersonSlice(p)) // 就邊Sort()出來的結果會使用前面定義的Less() interface，從大到小排列
 	sort.Sort(sort.Reverse(PersonSlice(p)))
 	fmt.Println("p=", p)
+}
+
+// 9.1 Common Operation on "JSON"
+func PackageJSON() {
+	// bool -> 將encode成JSON booleans
+	// float, int -> 將encode為JSON number
+	// string -> JSON string
+	// slice, array -> JSON array
+	// struct, map -> JSON object
+	// nil -> JSON null
+
+	type user struct {
+		Name string		`json:"name"`
+		Age int			`json:"age,omitempty"`
+		Email string	`json:"-"`	// 想用"-"當作別名，在後面加個逗號即可，Ex"-,"
+		Job map[string]string
+	}
+
+	u1:=user{
+		Name: "Diamond",
+		Age: 3,
+		Email: "123@asc.com",
+		Job: map[string]string{
+			"早班": "警衛",
+			"午班": "洗碗工",
+			"晚班": "外送員",
+		},
+	}
+	data, _ := json.Marshal(u1) // 在struct的情況下，直接傳address->(&u1)效果是一樣的，但是傳指標的整體效能更好，因為"json.Marshal(u1)"拷貝一份資料 → 傳入函式，通常效能稍低（尤其 struct 很大時）
+	// 所以只有在「具體型別」的 struct 時可以兩種都用，interface 的情況下只能傳值（不能取指標）。
+	fmt.Println(string(data))	// 這邊印出來是沒有分行的
+
+	// 格式化
+	buf:= new(bytes.Buffer)
+	json.Indent(buf, data, "", "\t")
+	fmt.Println(buf.String())
+
+	var u2 user
+	json.Unmarshal(data, &u2)
+	fmt.Println("u2=", u2)
 }
