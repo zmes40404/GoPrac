@@ -8,6 +8,8 @@ import (
 	"flag"
 	"fmt"
 	"goprac/util"
+	"io"
+	"net"
 	"runtime"
 	"sort"
 	"sync"
@@ -447,4 +449,101 @@ func PackageJSON() {
 	var u2 user
 	json.Unmarshal(data, &u2)
 	fmt.Println("u2=", u2)
+}
+
+// 10.1 TCP -> TCP中的byte string對應Go中的[]byte
+func TcpCli() {
+	conn, err := net.Dial("tcp", "127.0.0.1:2022")
+	if err != nil {
+		fmt.Println("撥號失敗", err)
+		return
+	}
+	defer conn.Close()
+	for {	// 寫一個死循環，永遠都在可撥號的情況下
+		mes:=struct{
+			UserName string
+			Mes string
+		}{
+			UserName: "方塊",
+		}
+		fmt.Println("請輸入要發送的內容:")
+		fmt.Scanf("%s\n", &mes.Mes)
+		if mes.Mes == ""{
+			fmt.Println("輸入為空:")
+			continue
+		} else if mes.Mes == "exit" {
+			return
+		}
+		
+		// 以下的方法效率不夠好
+		// 資料送出去是送出byte切片
+		// data, _ := json.Marshal(&mes)
+		// n, err := conn.Write(data)	// "Write"就是發消息，"Read"就是讀消息
+		// if err != nil {
+		// 	fmt.Println("發送失敗")
+		// 	return
+		// }
+		// fmt.Println("成功發送了%v個字節\n", n)
+
+		// JSON有提供一種結合io.writer接口的發送
+		// 透過 json.NewEncoder(conn).Encode(&mes) 可直接將 struct 編碼後發送，不需手動轉 []byte。
+		err := json.NewEncoder(conn).Encode(&mes) 	// 這邊有可能是發送失敗或是marshal失敗，可以再分別寫error handling處理
+		if err != nil {
+			fmt.Println("發送失敗")
+			return
+		}
+	}
+}
+
+func TcpServer() {
+	listener, err := net.Listen("tcp", ":2022")
+	if err != nil {
+		fmt.Println("監聽失敗")
+		return
+	}
+	defer listener.Close()
+	for {
+		fmt.Println("主線程等待客戶端連接...")
+		conn, err := listener.Accept()
+		if err != nil {
+			fmt.Println("接聽失敗", err)
+			continue
+		}
+		
+		// 使用 goroutine 處理多客戶端併發連線
+		go func(conn net.Conn){
+			fmt.Println("一個客戶端線程已開啟")
+			defer conn.Close()
+			for {
+				
+				// 先用笨方法來接收
+				// buf:=make([]byte, 4096)
+				// n, err := conn.Read(buf)
+				// if err == io.EOF{
+				// 	fmt.Println("客戶端已退出")
+				// 	return
+				// } else if err != nil {
+				// 	fmt.Println("讀取消息失敗:", err)
+				// 	return
+				// }
+
+				mes := struct{
+					UserName string
+					Mes string
+				}{}
+				// json.Unmarshal(buf[:n], &mes)
+
+				// 更高級的寫法
+				err := json.NewDecoder(conn).Decode(&mes)	// 用Decoder直接解碼，優點: 1. 不需處理 byte buffer 切片長度、解碼失敗等問題 2. 可自動處理資料邊界與解碼錯誤
+				if err == io.EOF{
+					fmt.Println("客戶端已退出")
+					return
+				} else if err != nil {
+					fmt.Println("讀取消息失敗:", err)
+					return
+				}
+				fmt.Printf("%s說: %s\n", mes.UserName, mes.Mes)
+			}
+		}(conn)
+	}
 }
