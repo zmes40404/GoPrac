@@ -18,3 +18,27 @@
 20:35:37.722125 db@open done T·14.814ms
 20:35:37.722125 db@close closing
 20:35:37.722125 db@close done T·0s
+=============== Aug 18, 2025 (CST) ===============
+14:21:43.888280 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+14:21:43.912273 version@stat F·[1] S·134B[134B] Sc·[0.25]
+14:21:43.912273 db@open opening
+14:21:43.912273 journal@recovery F·1
+14:21:43.912790 journal@recovery recovering @3
+14:21:43.920461 memdb@flush created L0@5 N·5 S·183B "user-1,v7":"user-3,v5"
+14:21:43.920967 version@stat F·[2] S·317B[317B] Sc·[0.50]
+14:21:43.930202 db@janitor F·4 G·0
+14:21:43.930202 db@open done T·17.9284ms
+14:21:43.934228 db@close closing
+14:21:43.934228 db@close done T·0s
+=============== Aug 18, 2025 (CST) ===============
+14:25:56.357334 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+14:25:56.369088 version@stat F·[2] S·317B[317B] Sc·[0.50]
+14:25:56.369088 db@open opening
+14:25:56.369088 journal@recovery F·1
+14:25:56.369595 journal@recovery recovering @6
+14:25:56.374156 memdb@flush created L0@8 N·10 S·239B "user-1,v9":"user-9,v17"
+14:25:56.374660 version@stat F·[3] S·556B[556B] Sc·[0.75]
+14:25:56.384914 db@janitor F·5 G·0
+14:25:56.384914 db@open done T·15.8262ms
+14:25:56.385423 db@close closing
+14:25:56.386176 db@close done T·753.7µs
