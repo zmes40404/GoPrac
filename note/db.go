@@ -55,7 +55,10 @@ func LeveldbIterate() {
 
 	// 遍歷指定範圍的資料、&leveldbUtil.Range處填nil為完整資料庫
 	iter := db.NewIterator(
-		&leveldbUtil.Range{Start: []byte("user-3"), Limit: []byte("user-8")}, nil) // 從user-3開始遍歷到user-7
+		&leveldbUtil.Range{
+			Start: []byte("user-3"), 
+			Limit: []byte("user-8"),
+		}, nil) // 從user-3開始遍歷到user-7
 	
 	for iter.Next(){
 		fmt.Printf("%v=%v\n", string(iter.Key()), string(iter.Value()))
@@ -89,4 +92,37 @@ func LeveldbIterate() {
 	if err != nil {
 		fmt.Println(err)
 	}
+}
+
+// 11.1.5~11.1.6 LevelDB Transaction and Snapshot
+// Snapshot 是一種資料庫在某個時間點的唯讀快照，它允許你從該時間點開始讀取資料，即使資料庫之後有改變，Snapshot 讀到的內容仍然保持不變。
+// Transaction（交易） 是一個原子性的操作集合，在 LevelDB 中透過 db.OpenTransaction() 開始，用來進行多筆資料的更新。
+func LeveldbTransactionAndSnapshot() {
+	db, err := leveldb.OpenFile("leveldb", nil)
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+	ss, err := db.GetSnapshot()
+	if err != nil {
+		panic(err)
+	}
+	defer ss.Release()	// Snapshot存在內存中
+	t, err := db.OpenTransaction()
+	if err != nil {
+		panic(err)
+	}
+	batch := new(leveldb.Batch)
+	for i := 1; i < 11; i++ {
+		batch.Put(
+			[]byte(fmt.Sprintf("cat-%v", i)),
+			[]byte(fmt.Sprintf("{\"name\":\"c%v\"}", i)))
+	}
+	t.Write(batch, nil)
+	// t.Discard()	// Discard 則會放棄整筆交易
+	t.Commit()	// commit 才會寫入資料庫
+	ok, _ := db.Has([]byte("cat-1"), nil)
+	fmt.Println("db Has \"cat-1\" ?", ok)
+	ok, _ = ss.Has([]byte("cat-1"), nil)
+	fmt.Println("ss Has \"cat-1\" ?", ok)
 }
