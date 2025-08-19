@@ -1,10 +1,13 @@
 package note
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/syndtr/goleveldb/leveldb"
 	leveldbUtil "github.com/syndtr/goleveldb/leveldb/util"
+
+	"github.com/go-redis/redis/v8"	// go-redis/redis/v8 是 Go 語言的 Redis 用戶端函式庫版本，與 Redis Server 本身的版本無直接關聯
 )
 
 // 11.1 Basic Usage of LevelDB
@@ -125,4 +128,25 @@ func LeveldbTransactionAndSnapshot() {
 	fmt.Println("db Has \"cat-1\" ?", ok)
 	ok, _ = ss.Has([]byte("cat-1"), nil)
 	fmt.Println("ss Has \"cat-1\" ?", ok)
+}
+
+// 11.2  Basic Operations of Redis
+func RedisBasic() {
+	opt := redis.Options {
+		Addr: "localhost:6379",	// 這個是安裝redis server預設的port
+	}
+	db := redis.NewClient(&opt)
+	// context.Context 是從 redis v8 開始被強制要求的。v8 的所有 API 都強制帶入 ctx，這是 Go 開發趨勢，也符合 idiomatic Go 設計。
+	ctx := context.Background()	// 這是一個空白的 context，永不逾時、不會取消。context.Context 是 Go 語言設計用來在 API 間傳遞 deadline（截止時間）、cancel signal（取消信號）、request-scoped value（請求範圍變數） 的核心工具
+	db.Do(ctx, "set", "k1", "v1")
+	res, err := db.Do(ctx, "get", "k1").Result() // 正常會顯示"res= v1", 若將"k1"改為"k2"則為"該key不存在"
+	if err != nil {
+		if err == redis.Nil {
+			fmt.Println("該key不存在")
+		} else {
+			fmt.Println(err)
+		}
+	} else {
+		fmt.Println("res=", res.(string))
+	}
 }
