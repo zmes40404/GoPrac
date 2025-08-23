@@ -3,7 +3,7 @@ package note
 import (
 	"context"
 	"fmt"
-
+	"time"
 	"github.com/syndtr/goleveldb/leveldb"
 	leveldbUtil "github.com/syndtr/goleveldb/leveldb/util"
 
@@ -148,5 +148,56 @@ func RedisBasic() {
 		}
 	} else {
 		fmt.Println("res=", res.(string))
+	}
+
+	// Basic type handling
+	db.Do(ctx, "set", "b1", true)
+	db.Do(ctx, "set", "b2", 0)
+	// b, err := db.Do(ctx, "get", "b2").Bool()
+	b, err := db.Do(ctx, "mget", "b1", "b2").BoolSlice()
+	if err == nil {
+		fmt.Println("b=", b)
+	}
+
+	db.Set(ctx, "t1", time.Now(), 0)
+	// t, err := db.Get(ctx, "t1").Time()	// return一個time的類型
+	t := db.Get(ctx, "t1").Val()	// 直接return string
+	if err == nil {
+		fmt.Println("t=", t)
+	}
+}
+
+// 11.2.6 Redis Pipeline
+func RedisPipeline() {
+	db := redis.NewClient(&redis.Options {
+		Addr: "localhost:6379",
+	})
+	ctx := context.Background()
+	pipe := db.Pipeline()	// 開啟一個管道
+	t1 := pipe.Get(ctx, "t1")	// 這邊只是先設定好命令，但尚未執行，所以這邊回傳的參數t1也會是空的。回傳的t1為 *redis.StringCmd
+	fmt.Println("pipe執行前的t1=", t1)
+	for i := 0; i < 10; i++ {	// 用for loop來設定要批量執行的命令
+		pipe.Set(ctx, fmt.Sprintf("p%v", i), i, 0)
+	}
+	_, err := pipe.Exec(ctx)	// 這邊才是真正去執行管道
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("pipe執行後的t1=", t1)
+
+	cmds, err := db.Pipelined(ctx, func(pipe redis.Pipeliner) error{	// 回傳的cmds是一個[]cmder的切片，Cmder 是一個 interface（介面）
+		for i:=0; i<10; i++ {
+			pipe.Get(ctx, fmt.Sprintf("p%v", i))
+		}
+		return nil
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	for i, cmd:= range cmds {
+		fmt.Printf("p%v=%v\n", i, cmd.(*redis.StringCmd).Val())
+		// 為什麼要 .(*redis.StringCmd)？->因為 Pipelined() 回傳的是通用介面 Cmder，你需要轉型才能呼叫對應方法(*redis.StringCmd（對應 GET 等會回傳字串的 Redis 指令） *redis.IntCmd（像是 INCR, DECR 等會回傳整數） *redis.StatusCmd *redis.BoolCmd 其他類型...)
+		// 為什麼不能直接印 string？-> cmd 是介面不是字串，要呼叫 .Val() 才能取出具體值，且須先轉型
 	}
 }
