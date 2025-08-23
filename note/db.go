@@ -201,3 +201,41 @@ func RedisPipeline() {
 		// 為什麼不能直接印 string？-> cmd 是介面不是字串，要呼叫 .Val() 才能取出具體值，且須先轉型
 	}
 }
+
+// 11.2.6 Redis Transaction
+func RedisTransaction() {
+	db := redis.NewClient(&redis.Options {
+		Addr: "localhost:6379",
+	})
+	ctx := context.Background()
+	// 以下是模擬一個「錢包轉帳」的邏輯->示範 Redis 的 Transaction：扣 p0 加 p1，具原子性，確保一致性
+	// 把金額 100 從帳戶 p0 扣掉 
+	// 把金額 100 增加到帳戶 p1 
+	// 並保證這兩個動作是原子性 (atomic) 的：要嘛兩個都成功、要嘛兩個都失敗（不能只做一半）
+	// 重點: 使用 WATCH 監控 key、用 pipeline 執行多指令、EXEC 提交交易
+	
+	for i:=0; i < 10; i++ {
+		err := db.Watch(ctx, func(tx *redis.Tx) (err error) {	// 使用 Redis 的 WATCH + MULTI/EXEC 機制來進行樂觀鎖控制
+			pipe := tx.Pipeline()	// 建立一個 transaction pipeline
+			err = pipe.IncrBy(ctx, "p1", 100).Err()	// p1 加值 100
+			if err != nil {
+				return 
+			}
+			err = pipe.DecrBy(ctx, "p0", 100).Err()	// p0 減值 100
+			if err != nil {
+				return
+			}
+			_, err = pipe.Exec(ctx)	// 提交整個 transaction（如果中間有 key 被其他 client 改變，就會返回 TxFailedErr）
+			return
+		}, "p0")	// 也可寫成"}, "p0", "p1")"，這樣就會同時監視 p0 和 p1，當任一個 key 在交易前被其他 client 修改時，這次交易就會失敗。
+		if err == nil {
+			fmt.Println("Transaction commit成功")
+			break
+		} else if err == redis.TxFailedErr {	// 如果 transaction 失敗就重試（最多 10 次）
+			fmt.Println("Transaction執行失敗, 這次是第", i, "次嘗試")
+			continue
+		} else {
+			panic(err)
+		}
+	}
+}
