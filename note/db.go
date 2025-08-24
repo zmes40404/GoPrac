@@ -6,8 +6,8 @@ import (
 	"time"
 	"github.com/syndtr/goleveldb/leveldb"
 	leveldbUtil "github.com/syndtr/goleveldb/leveldb/util"
-
 	"github.com/go-redis/redis/v8"	// go-redis/redis/v8 是 Go 語言的 Redis 用戶端函式庫版本，與 Redis Server 本身的版本無直接關聯
+	"goprac/util"
 )
 
 // 11.1 Basic Usage of LevelDB
@@ -242,10 +242,12 @@ func RedisTransaction() {
 
 // 11.2.8 Redis Iteration
 func RedisIterate() {
-	db := redis.NewClient(&redis.Options {
-		Addr: "localhost:6379",
-	})
-	ctx := context.Background()
+	// db := redis.NewClient(&redis.Options {
+	// 	Addr: "localhost:6379",
+	// })
+	// ctx := context.Background()
+	db := util.GetRedisClient()
+	ctx := util.GetRedisContext()
 
 	// Scan
 	iter := db.Scan(ctx, 0, "p*", 0).Iterator()
@@ -282,4 +284,38 @@ func RedisIterate() {
 		panic(err)
 	}
 
+}
+
+// 11.2.9 Scan Redis Hash to Structure
+type RedisHash struct {	// 這邊的開頭要大寫for public，因為要傳給redis包(exported，跨套件存取)
+	Name string	`redis:"name"`
+	Id int `redis:"id"`
+	Online bool `redis:"online"`
+}
+
+// 把一個 RedisHash 結構寫入 Redis 的 hash 結構。
+// 再從 Redis 把該 hash 資料取出來，轉成 RedisHash 結構
+func RedisHashToStruct() {
+	db := util.GetRedisClient()
+	ctx := util.GetRedisContext()
+	var rh1 = RedisHash{
+		Name: "rhName",
+		Id: 123,
+		Online: true,
+	}
+
+	db.Pipelined(ctx, func(pipe redis.Pipeliner) error {	// 使用 Redis 的 pipeline 技術，一次發送多個 HSET 命令來提高效能
+		pipe.HSet(ctx, "rh1", "name", rh1.Name)
+		pipe.HSet(ctx, "rh1", "id", rh1.Id)
+		pipe.HSet(ctx, "rh1", "online", rh1.Online)
+		return nil	// 如果想要回報一個 Redis 相關錯誤（如 Key 或 Field 不存在等），才會 return redis.Nil
+	})
+
+	var rh2 RedisHash
+	// HGetAll(): 一次抓取整個 Redis hash 中的 所有 field-value 對，回傳 map[string]string。適合用來讀取整個物件，像你這段 Scan(&rh2) 就是搭配整筆資料轉 struct
+	// HGet():只抓取指定 field 的值，例如：HGet(ctx, "rh1", "name") 只會回傳 "rhName"。 回傳值是單一 StringCmd（不是 map）
+	if err := db.HGetAll(ctx, "rh1").Scan(&rh2); err != nil{	// 傳入指標（pointer）&rh2 才能讓函式真的去改變外部變數的內容，如果你寫成 Scan(rh2)，那只是一份 copy，無法把值寫入 rh2 這個變數本身。結論：Scan() 一定要傳指標（如 &yourStruct）
+		panic(err)
+	}	// HGetAll返回的是一個map[string]string(redis.StringStringMapCmd)
+	fmt.Printf("rh2=%+v\n", rh2)	// "%+v":印出變數內容，並包含struct欄位名稱，Ex.{Name:test Id:1 Online:true}。"%#v": 印出該值的Go語法表示形式(含型別)，Ex.main.RedisHash{Name:"test", Id:1, Online:true}
 }
