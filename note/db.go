@@ -213,7 +213,7 @@ func RedisTransaction() {
 	// 把金額 100 增加到帳戶 p1 
 	// 並保證這兩個動作是原子性 (atomic) 的：要嘛兩個都成功、要嘛兩個都失敗（不能只做一半）
 	// 重點: 使用 WATCH 監控 key、用 pipeline 執行多指令、EXEC 提交交易
-	
+
 	for i:=0; i < 10; i++ {
 		err := db.Watch(ctx, func(tx *redis.Tx) (err error) {	// 使用 Redis 的 WATCH + MULTI/EXEC 機制來進行樂觀鎖控制
 			pipe := tx.Pipeline()	// 建立一個 transaction pipeline
@@ -238,4 +238,48 @@ func RedisTransaction() {
 			panic(err)
 		}
 	}
+}
+
+// 11.2.8 Redis Iteration
+func RedisIterate() {
+	db := redis.NewClient(&redis.Options {
+		Addr: "localhost:6379",
+	})
+	ctx := context.Background()
+
+	// Scan
+	iter := db.Scan(ctx, 0, "p*", 0).Iterator()
+	// 第一個參數 0 是 cursor（游標），初始為 0，會自動由 Iterator 控制。
+	// 第二個參數 "p*" 是 pattern，這邊代表匹配前綴為 "p" 的所有鍵（例如 p0, p1…）
+	// 第三個參數 0 是 count，表示讓 Redis 自行決定回傳的筆數（可視為優化的 hint）
+	for iter.Next(ctx) {
+		fmt.Printf("key=%v, value=%v\n", iter.Val(), db.Get(ctx, iter.Val()).Val())
+	}
+
+	// if 語句中的短變數宣告（short variable declaration）。可以在 if 語句裡面進行短變數宣告後，用邏輯運算子 && 或 || 結合其他條件
+	// 短變數宣告只能宣告一個變數，不能同時宣告多個。
+	// 好處: 
+	// 限定作用域：err 僅在這個 if 區塊內有效，不會污染整個函式或其他區塊的變數命名空間。
+	// 更簡潔：常見於 error handling 的寫法，Go 社群也鼓勵這種方式。
+	if err := iter.Err(); err != nil {	
+	}
+
+	// HScan
+	// db.Set / db.Scan 跟 db.HSet / db.HScan 的差異其實反映了 Redis 不同資料結構（data type）在使用與底層儲存上的根本設計差異
+	// Set, Get, Scan String（最基本型別） 儲存單一 key 對應的 value（字串）
+	// HSet, HGet, HScan Hash（類似 dict/map） 一個 key 對應多個 field:value 欄位的集合 
+
+	db.HSet(ctx, "h1", "f1", "v1", "f2", "v2", "f3", "v3")	// db.HSet(...): 新增一個 hash 鍵 "h1"，包含 f1:v1, f2:v2, f3:v3 三個欄位。
+	iter = db.HScan(ctx, "h1", 0, "*", 0).Iterator()	// db.HScan(...)：針對 hash 鍵 "h1" 的欄位做遍歷（非阻塞）
+	for i:=0 ; iter.Next(ctx); i++ {
+		if i % 2 ==0 {	// iter.Val()：會依序回傳 field、value、field、value，所以要用 index i 判斷偶數是 field、奇數是 value。
+			fmt.Printf("field=%v, ", iter.Val())
+		}else {
+			fmt.Printf("field=%v\n", iter.Val())
+		}
+	}
+	if err := iter.Err(); err != nil {
+		panic(err)
+	}
+
 }
