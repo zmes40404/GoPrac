@@ -1,7 +1,7 @@
 package note
 
 import (
-	"context"
+	_"context"
 	"fmt"
 	"time"
 	"github.com/syndtr/goleveldb/leveldb"
@@ -132,12 +132,15 @@ func LeveldbTransactionAndSnapshot() {
 
 // 11.2  Basic Operations of Redis
 func RedisBasic() {
-	opt := redis.Options {
-		Addr: "localhost:6379",	// 這個是安裝redis server預設的port
-	}
-	db := redis.NewClient(&opt)
+	// opt := redis.Options {
+	// 	Addr: "localhost:6379",	// "6379"是安裝redis server預設的port
+	// }
+	// db := redis.NewClient(&opt)
 	// context.Context 是從 redis v8 開始被強制要求的。v8 的所有 API 都強制帶入 ctx，這是 Go 開發趨勢，也符合 idiomatic Go 設計。
-	ctx := context.Background()	// 這是一個空白的 context，永不逾時、不會取消。context.Context 是 Go 語言設計用來在 API 間傳遞 deadline（截止時間）、cancel signal（取消信號）、request-scoped value（請求範圍變數） 的核心工具
+	// ctx := context.Background()	// 這是一個空白的 context，永不逾時、不會取消。context.Context 是 Go 語言設計用來在 API 間傳遞 deadline（截止時間）、cancel signal（取消信號）、request-scoped value（請求範圍變數） 的核心工具
+	db := util.GetRedisClient()
+	ctx := util.GetRedisContext()
+
 	db.Do(ctx, "set", "k1", "v1")
 	res, err := db.Do(ctx, "get", "k1").Result() // 正常會顯示"res= v1", 若將"k1"改為"k2"則為"該key不存在"
 	if err != nil {
@@ -169,10 +172,9 @@ func RedisBasic() {
 
 // 11.2.6 Redis Pipeline
 func RedisPipeline() {
-	db := redis.NewClient(&redis.Options {
-		Addr: "localhost:6379",
-	})
-	ctx := context.Background()
+	db := util.GetRedisClient()
+	ctx := util.GetRedisContext()
+
 	pipe := db.Pipeline()	// 開啟一個管道
 	t1 := pipe.Get(ctx, "t1")	// 這邊只是先設定好命令，但尚未執行，所以這邊回傳的參數t1也會是空的。回傳的t1為 *redis.StringCmd
 	fmt.Println("pipe執行前的t1=", t1)
@@ -204,10 +206,8 @@ func RedisPipeline() {
 
 // 11.2.6 Redis Transaction
 func RedisTransaction() {
-	db := redis.NewClient(&redis.Options {
-		Addr: "localhost:6379",
-	})
-	ctx := context.Background()
+	db := util.GetRedisClient()
+	ctx := util.GetRedisContext()
 	// 以下是模擬一個「錢包轉帳」的邏輯->示範 Redis 的 Transaction：扣 p0 加 p1，具原子性，確保一致性
 	// 把金額 100 從帳戶 p0 扣掉 
 	// 把金額 100 增加到帳戶 p1 
@@ -242,10 +242,6 @@ func RedisTransaction() {
 
 // 11.2.8 Redis Iteration
 func RedisIterate() {
-	// db := redis.NewClient(&redis.Options {
-	// 	Addr: "localhost:6379",
-	// })
-	// ctx := context.Background()
 	db := util.GetRedisClient()
 	ctx := util.GetRedisContext()
 
